@@ -69,6 +69,85 @@ def validation(number):
                 print("\n * Ingrese un número mayor o igual a 0.")
         else:
             print("\n * Entrada inválida. Debe ingresar un número entero mayor o igual a 0.")
+            
+
+def inverso_modular(e, n):
+
+    # Paso 1: Inicializar valores
+    a, b = n, e
+    t1, t2 = 0, 1  # Coeficientes iniciales
+
+    # Paso 2: Iterar hasta que b sea 0
+    while b > 0:
+        # Dividir a entre b
+        cociente = a // b
+        
+        # Actualizar restos
+        a, b = b, a - cociente * b
+
+        # Actualizar coeficientes
+        t1, t2 = t2, t1 - cociente * t2
+
+    # Paso 3: Revisar si existe inverso
+    if a != 1:
+        return None  # No hay inverso porque el MCD no es 1
+
+    # Paso 4: Ajustar resultado si es negativo
+    if t1 < 0:
+        t1 += n
+
+    return t1
+
+def generar_llaves(rango_inferior, rango_superior):
+    # Paso 1: Generar los dos números primos
+    print("Generando números primos...")
+    primo1 = generar_primo(rango_inferior, rango_superior)[0]
+    primo2 = generar_primo(rango_inferior, rango_superior)[0]
+    
+    print(f"Números primos generados: {primo1}, {primo2}")
+    
+    # Asegurarse de que los dos números primos sean diferentes
+    while primo1 == primo2:
+        print(f"Los números primos generados son iguales ({primo1}), buscando otro primo...")
+        primo2 = generar_primo(rango_inferior, rango_superior)[0]
+    
+    # Calculamos n y φ(n)
+    n = primo1 * primo2
+    phi = (primo1 - 1) * (primo2 - 1)
+    print(f"Valores calculados: n = {n}, φ(n) = {phi}")
+
+    # Elegimos un número e que sea coprimo con φ(n)
+    e = None
+    for i in range(2, phi):
+        if mcd(i, phi) == 1:
+            e = i
+            break
+
+    if e is None:
+        print("No se encontró un valor adecuado para e.")
+        return None
+
+    print(f"Valor elegido para e: {e}")
+
+    # Calculamos el inverso modular de e
+    d = inverso_modular(e, phi)
+    if d is None:
+        print("No se pudo calcular el inverso modular de e.")
+        return None
+
+    print(f"Valor calculado para d: {d}")
+
+    # Validamos que la llave pública y privada sean diferentes
+    if e == d:
+        print("e y d son iguales. No se puede generar un par de llaves válido.")
+        return None
+
+    # Finalmente retornamos la llave pública y privada
+    llave_publica = (e, n)
+    llave_privada = (d, n)
+    print("Llaves generadas exitosamente.")
+    return llave_publica, llave_privada
+
 
     
 def main():
@@ -78,32 +157,57 @@ def main():
     
     while True:
         print("\n +--------------------------------------------+")
-        print("Generación de números primos:")
-        # Solicitud de los límites
-        rango_inferior = validation(" - Ingrese el límite inferior: ")
-        rango_superior = validation(" - Ingrese el límite superior (mayor que el límite inferior): ")
-        # Validación de rango
-        if rango_superior > rango_inferior:
-            generated_prime1, primes_counter = generar_primo(rango_inferior, rango_superior)
-            # Validar que si se puedan generar primos para dar mensaje
-            if primes_counter != 0:
-                # Como se necesitan dos primos si solo hay un primo en la lista de generar primos, entonces dar mensaje para ingresar nuevo rango
-                if primes_counter == 1:
-                    print("\n * En el rango hay solo un primo, para RSA se necesitan dos. Ingrese otro rango.")
-                elif primes_counter >= 2:
-                    generated_prime2, primes_counter = generar_primo(rango_inferior, rango_superior)
-                    # Verificar que los dos primos sean diferentes
-                    while generated_prime1 == generated_prime2:
-                        # Salir del bucle hasta que ambos primos son diferentes
+        print("Seleccione una opción:")
+        print("1. Generar números primos")
+        print("2. Generar claves RSA")
+        print("3. Salir")
+        
+        opcion = input("Ingrese su opción: ")
+        
+        if opcion == "1":
+            print("\nGeneración de números primos:")
+            rango_inferior = validation(" - Ingrese el límite inferior: ")
+            rango_superior = validation(" - Ingrese el límite superior (mayor que el límite inferior): ")
+            
+            if rango_superior > rango_inferior:
+                generated_prime1, primes_counter = generar_primo(rango_inferior, rango_superior)
+                if primes_counter != 0:
+                    if primes_counter == 1:
+                        print("\n * En el rango hay solo un primo, para RSA se necesitan dos. Ingrese otro rango.")
+                    elif primes_counter >= 2:
                         generated_prime2, primes_counter = generar_primo(rango_inferior, rango_superior)
-                    
-                    print("\n * El primer número primo generado es:", generated_prime1)
-                    print(" * El segundo número primo generado es:",generated_prime2)
-                    break  
+                        while generated_prime1 == generated_prime2:
+                            generated_prime2, primes_counter = generar_primo(rango_inferior, rango_superior)
+                        
+                        print("\n * El primer número primo generado es:", generated_prime1)
+                        print(" * El segundo número primo generado es:", generated_prime2)
+                else:
+                    print(f"\n * No se encontró un número primo en el rango {rango_inferior} a {rango_superior}. Ingrese otro rango.")
             else:
-                print(f"\n * No se encontró un número primo en el rango {rango_inferior} a {rango_superior}. Ingrese otro rango.")
+                print(" * El rango superior debe ser mayor que el rango inferior. Intente nuevamente.")
+        
+        elif opcion == "2":
+            print("\nGeneración de claves RSA:")
+            rango_inferior = validation(" - Ingrese el límite inferior: ")
+            rango_superior = validation(" - Ingrese el límite superior (mayor que el límite inferior): ")
+            
+            if rango_superior > rango_inferior:
+                llaves = generar_llaves(rango_inferior, rango_superior)
+                if llaves:
+                    llave_publica, llave_privada = llaves
+                    print("\n * Clave pública generada: ", llave_publica)
+                    print(" * Clave privada generada: ", llave_privada)
+                else:
+                    print("\n * No se pudieron generar las claves. Intente con otro rango.")
+            else:
+                print(" * El rango superior debe ser mayor que el límite inferior. Intente nuevamente.")
+        
+        elif opcion == "3":
+            print("\nGracias por usar el programa. ¡Hasta luego!")
+            break
+        
         else:
-            print(" * El rango superior debe ser mayor que el rango inferior. Intente nuevamente.")
+            print("\n * Opción inválida. Intente nuevamente.")
 
 
 if __name__ == "__main__":
